@@ -68,6 +68,10 @@ static void MX_TIM1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+void delay(uint16_t delay){
+	__HAL_TIM_SET_COUNTER(&htim1,0);
+	while(__HAL_TIM_GET_COUNTER(&htim1)<delay);
+}
 
 unsigned char check_clm(unsigned char pin_var)
 {
@@ -203,6 +207,24 @@ void cekKeypad(int var1){
 	}
 }
 
+float mape(float val, float min1, float max1, float min2, float max2){
+	return (((max2 - min2) / (max1 - min1)) * (val - min1)) + min2;
+}
+
+void gerakStepper(char arah, uint32_t step, uint32_t jeda){
+//	uint8_t val = mape(nilai, 0, 20, 0, 30000);
+	uint8_t gerak = 0;
+	if(arah == 'l') gerak = 0;
+	else if(arah == 'r') gerak = 1;
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, gerak);
+	for(int i = 0; i < step; i++){
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
+		delay(jeda);
+		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 0);
+		delay(jeda);
+	}
+}
+
 
 /* USER CODE END 0 */
 
@@ -234,6 +256,7 @@ int main(void)
   //its for output pin
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2|GPIO_PIN_0, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -259,17 +282,10 @@ int main(void)
   ssd1306_UpdateScreen();
   while (1)
   {
-//	  HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_13);
-//	  i++;
-//	  HAL_Delay(1000);
 //	  strcpy((char*)buf, "hello\r\n");
 //	  sprintf(data, "HALO: %d\r\n",i);
 //	  HAL_UART_Transmit(&huart1, (uint8_t*)data, sizeof(data), HAL_MAX_DELAY);
 //	  HAL_UART_Transmit(&huart1,buf,strlen((char*)buf),HAL_MAX_DELAY);
-//	  HAL_Delay(1000);
-
-//	  HAL_Delay(1000);
-
 //	  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, 0);
 //	  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, 1);
 //	  state = HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1);
@@ -277,28 +293,22 @@ int main(void)
 //	  HAL_ADC_Start(&hadc1);
 //	  HAL_ADC_PollForConversion(&hadc1,1000);
 //	  readValue = HAL_ADC_GetValue(&hadc1);
-	  var = key_press();
-	  cekKeypad(var);////////////////////////////////////
 //	  sprintf(data," NILAI: %d\r\n",var);
 //	  HAL_UART_Transmit(&huart1, (uint8_t*)data, sizeof(data), HAL_MAX_DELAY);
-//	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
-//	  HAL_Delay(100);
-//	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
-//	  HAL_Delay(100);
+	  ////////////////////////////////////////////////////////////////////////////////////
+	  var = key_press();
+	  cekKeypad(var);////////////////////////////////////
 	  if(var == 13){
 		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, 1);
+	  }
+	  else if(var == 9){
+//		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, 1);
+		  gerakStepper('r',10000,5500); //5000 == 50 uS
 	  }
 	  else{
 		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, 0);
 	  }
-//	  else if(var1==3){
-//	  		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 1);
-//	  	  }
-//	  else{
-//		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, 0);
-//		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_14, 0);
-//		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_15, 0);
-//	  }
+	  ////////////////////////////////////////////////////////////////////////////////////
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -406,9 +416,9 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 100;
+  htim1.Init.Prescaler = 1-1;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 10000-1;
+  htim1.Init.Period = 0xffff-1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
